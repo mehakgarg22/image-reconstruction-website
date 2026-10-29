@@ -10,10 +10,9 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 from skimage.restoration import richardson_lucy
 
-
-# -----------------------------
-# Page setup and visual styling
-# -----------------------------
+# ============================================================
+# PAGE CONFIGURATION
+# ============================================================
 st.set_page_config(
     page_title="ImageRestore Studio",
     page_icon="✦",
@@ -30,45 +29,26 @@ st.markdown(
         --line: #e5eaf2;
         --accent: #635bff;
         --accent2: #8b5cf6;
-        --surface: #ffffff;
-        --soft: #f6f7fb;
     }
-
     .stApp {
         background:
-            radial-gradient(
-                ellipse at 8% 0%,
-                rgba(99,91,255,.08),
-                transparent 35%
-            ),
-            linear-gradient(
-                180deg,
-                #fbfcff 0%,
-                #f7f8fc 100%
-            );
+            radial-gradient(ellipse at 8% 0%, rgba(99,91,255,.08), transparent 35%),
+            linear-gradient(180deg, #fbfcff 0%, #f7f8fc 100%);
         color: var(--ink);
     }
-
     .block-container {
         max-width: 1400px;
         padding-top: 1.5rem;
         padding-bottom: 3rem;
     }
-
     .hero {
         padding: 1.6rem 1.8rem;
         border: 1px solid rgba(99,91,255,.15);
         border-radius: 24px;
-        background: linear-gradient(
-            120deg,
-            #ffffff 0%,
-            #f0efff 58%,
-            #f8faff 100%
-        );
+        background: linear-gradient(120deg, #fff 0%, #f0efff 58%, #f8faff 100%);
         box-shadow: 0 12px 40px rgba(31,41,55,.05);
         margin-bottom: 1.3rem;
     }
-
     .eyebrow {
         text-transform: uppercase;
         letter-spacing: .16em;
@@ -77,33 +57,25 @@ st.markdown(
         font-weight: 800;
         margin-bottom: .5rem;
     }
-
     .hero h1 {
         font-size: clamp(2rem, 4vw, 3.1rem);
         line-height: 1.08;
         margin: 0;
         color: #151b31;
     }
-
     .hero p {
         font-size: 1.02rem;
         color: #5b6477;
         max-width: 780px;
         margin: .85rem 0 0;
     }
-
     .section-head {
         margin: 1.4rem 0 .4rem;
         font-size: 1.35rem;
         font-weight: 750;
         color: #172033;
     }
-
-    .subtle {
-        color: #64748b;
-        font-size: .92rem;
-    }
-
+    .subtle { color: #64748b; font-size: .92rem; }
     .mini-card {
         background: white;
         border: 1px solid #e5eaf2;
@@ -111,20 +83,17 @@ st.markdown(
         padding: 1rem 1.1rem;
         min-height: 96px;
     }
-
     .mini-label {
         font-size: .78rem;
         color: #64748b;
         font-weight: 650;
     }
-
     .mini-value {
         font-size: 1.5rem;
         font-weight: 800;
         color: #172033;
         margin-top: .2rem;
     }
-
     .pill {
         display: inline-block;
         border-radius: 999px;
@@ -134,14 +103,12 @@ st.markdown(
         font-size: .78rem;
         font-weight: 700;
     }
-
     div[data-testid="stMetric"] {
         background: white;
         border: 1px solid #e5eaf2;
         border-radius: 14px;
         padding: .8rem 1rem;
     }
-
     div.stButton > button[kind="primary"] {
         background: linear-gradient(100deg, #635bff, #8b5cf6);
         border: 0;
@@ -149,22 +116,17 @@ st.markdown(
         min-height: 3rem;
         font-weight: 750;
     }
-
     div.stDownloadButton > button {
         border-radius: 10px;
         font-weight: 650;
     }
-
     [data-testid="stFileUploader"] {
         background: white;
         border: 1px dashed #b7b8f8;
         border-radius: 16px;
         padding: .5rem;
     }
-
-    footer {
-        visibility: hidden;
-    }
+    footer { visibility: hidden; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -173,24 +135,21 @@ st.markdown(
 st.markdown(
     """
     <div class="hero">
-      <div class="eyebrow">
-        Computer vision · Image restoration
-      </div>
+      <div class="eyebrow">Computer vision · Image restoration</div>
       <h1>ImageRestore Studio</h1>
       <p>
-        Clean up noise, enhance details, experiment with blur restoration,
-        and repair a selected damaged region — with side-by-side previews
-        and downloadable results.
+        Remove simulated noise, restore blurred images, and repair a damaged
+        region. Explore every intermediate step, compare results, and
+        download your images.
       </p>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-
-# -----------------------------
-# Helper functions
-# -----------------------------
+# ============================================================
+# HELPER FUNCTIONS
+# ============================================================
 MAX_FILE_MB = 20
 MAX_PIXELS = 24_000_000
 
@@ -209,8 +168,8 @@ def load_rgb(uploaded_file):
         if image.width * image.height > MAX_PIXELS:
             raise ValueError(
                 "This image has more than 24 megapixels. "
-                "Please upload a smaller image to keep processing responsive. "
-                "The app does not resize images silently."
+                "Please upload a smaller image. The app does not "
+                "resize images silently."
             )
 
         return np.asarray(image, dtype=np.uint8)
@@ -218,11 +177,9 @@ def load_rgb(uploaded_file):
 
 def to_png_bytes(array):
     buffer = io.BytesIO()
-
     Image.fromarray(
         np.asarray(array, dtype=np.uint8)
     ).save(buffer, format="PNG")
-
     return buffer.getvalue()
 
 
@@ -241,9 +198,7 @@ def evaluate(reference, result):
 
     psnr = float(
         peak_signal_noise_ratio(
-            reference,
-            result,
-            data_range=255
+            reference, result, data_range=255
         )
     )
 
@@ -252,19 +207,16 @@ def evaluate(reference, result):
             reference,
             result,
             channel_axis=-1,
-            data_range=255
+            data_range=255,
         )
     )
 
     return mse, psnr, ssim
 
 
-def unsharp_mask(image, amount=0.7, radius=1.2):
+def unsharp_mask(image, amount=0.5, radius=1.2):
     blurred = cv2.GaussianBlur(
-        image,
-        (0, 0),
-        sigmaX=radius,
-        sigmaY=radius
+        image, (0, 0), sigmaX=radius, sigmaY=radius
     )
 
     result = cv2.addWeighted(
@@ -272,7 +224,7 @@ def unsharp_mask(image, amount=0.7, radius=1.2):
         1.0 + amount,
         blurred.astype(np.float32),
         -amount,
-        0
+        0,
     )
 
     return np.clip(result, 0, 255).astype(np.uint8)
@@ -280,15 +232,14 @@ def unsharp_mask(image, amount=0.7, radius=1.2):
 
 def denoise_image(image, strength=5):
     h = int(strength)
-    h_color = max(3, int(round(h * 0.9)))
 
     return cv2.fastNlMeansDenoisingColored(
         image,
         None,
         h,
-        h_color,
+        max(3, int(round(h * 0.9))),
         7,
-        21
+        21,
     )
 
 
@@ -310,7 +261,10 @@ def make_blur_kernel(size=9, sigma=2.0):
 
 
 def deblur_image(image, iterations=10, kernel_size=9, sigma=2.0):
-    kernel = make_blur_kernel(kernel_size, sigma)
+    kernel = make_blur_kernel(
+        int(kernel_size), float(sigma)
+    )
+
     channels = []
 
     for channel in cv2.split(
@@ -320,7 +274,7 @@ def deblur_image(image, iterations=10, kernel_size=9, sigma=2.0):
             channel,
             kernel,
             num_iter=int(iterations),
-            clip=True
+            clip=True,
         )
 
         channels.append(
@@ -330,10 +284,10 @@ def deblur_image(image, iterations=10, kernel_size=9, sigma=2.0):
     return cv2.merge(channels).astype(np.uint8)
 
 
-def compare_metric_rows(reference, pairs):
+def compare_metric_rows(reference, restored_images):
     rows = []
 
-    for name, result in pairs.items():
+    for name, result in restored_images.items():
         mse, psnr, ssim = evaluate(reference, result)
 
         rows.append({
@@ -346,53 +300,49 @@ def compare_metric_rows(reference, pairs):
     return pd.DataFrame(rows)
 
 
-def build_results_zip(original, degraded_results, restored_results, metrics):
-    data = io.BytesIO()
+def build_results_zip(original, stages, metrics):
+    buffer = io.BytesIO()
 
     with zipfile.ZipFile(
-        data,
-        "w",
-        compression=zipfile.ZIP_DEFLATED
+        buffer, "w", compression=zipfile.ZIP_DEFLATED
     ) as archive:
-
         archive.writestr(
-            "original.png",
-            to_png_bytes(original)
+            "original.png", to_png_bytes(original)
         )
 
-        for name, image in degraded_results.items():
-            safe_name = name.lower().replace(" ", "_")
+        for method, steps in stages.items():
+            folder = method.lower().replace(" ", "_")
 
-            archive.writestr(
-                f"{safe_name}_degraded.png",
-                to_png_bytes(image)
-            )
+            for index, (step_name, image) in enumerate(
+                steps, start=1
+            ):
+                filename = (
+                    step_name.lower()
+                    .replace(" ", "_")
+                    .replace(":", "")
+                )
 
-        for name, image in restored_results.items():
-            safe_name = name.lower().replace(" ", "_")
-
-            archive.writestr(
-                f"{safe_name}_reconstructed.png",
-                to_png_bytes(image)
-            )
+                archive.writestr(
+                    f"{folder}/{index}_{filename}.png",
+                    to_png_bytes(image),
+                )
 
         archive.writestr(
             "quality_metrics.csv",
-            metrics.to_csv(index=False)
+            metrics.to_csv(index=False),
         )
 
-    data.seek(0)
+    buffer.seek(0)
+    return buffer.getvalue()
 
-    return data.getvalue()
 
-
-# -----------------------------
-# Sidebar controls
-# -----------------------------
+# ============================================================
+# SIDEBAR SETTINGS
+# ============================================================
 with st.sidebar:
     st.markdown("## ✦ Workspace")
     st.caption(
-        "Upload once, then choose the restoration experiment."
+        "Upload an image to automatically run the reconstruction steps."
     )
 
     uploaded_file = st.file_uploader(
@@ -401,101 +351,54 @@ with st.sidebar:
         help=(
             f"Maximum file size: {MAX_FILE_MB} MB. "
             "Images are not silently resized."
-        )
+        ),
     )
 
     st.markdown("---")
     st.markdown("### Restoration settings")
 
     denoise_strength = st.slider(
-        "Denoising strength",
-        min_value=3,
-        max_value=12,
-        value=5,
-        help=(
-            "Start low to retain texture. Increase only "
-            "if the input has strong noise."
-        )
+        "Denoising strength", 3, 12, 5
     )
 
     sharpen_amount = st.slider(
-        "Detail enhancement",
-        min_value=0.0,
-        max_value=1.5,
-        value=0.35,
-        step=0.05,
-        help=(
-            "0 disables sharpening. Too much can create "
-            "halos and exaggerate noise."
-        )
+        "Detail enhancement", 0.0, 1.5, 0.35, 0.05
     )
 
     sharpen_radius = st.slider(
-        "Sharpen radius",
-        min_value=0.5,
-        max_value=3.0,
-        value=1.2,
-        step=0.1
+        "Sharpen radius", 0.5, 3.0, 1.2, 0.1
     )
 
     noise_strength = st.slider(
-        "Synthetic noise level",
-        min_value=5,
-        max_value=60,
-        value=25
+        "Synthetic noise level", 5, 60, 25
     )
 
     blur_size = st.select_slider(
         "Synthetic blur kernel",
         options=[3, 5, 7, 9, 11, 13],
-        value=9
+        value=9,
     )
 
     blur_sigma = st.slider(
-        "Deblur blur estimate",
-        min_value=0.8,
-        max_value=3.0,
-        value=2.0,
-        step=0.1,
-        help=(
-            "This is an estimate of the blur kernel; "
-            "actual blur may differ."
-        )
+        "Deblur blur estimate", 0.8, 3.0, 2.0, 0.1
     )
 
     deblur_iterations = st.slider(
-        "Deblur iterations",
-        min_value=5,
-        max_value=25,
-        value=10,
-        step=5,
-        help=(
-            "More iterations can increase sharpness "
-            "but also amplify artifacts."
-        )
+        "Deblur iterations", 5, 25, 10, 5
     )
 
     missing_percent = st.slider(
-        "Simulated missing region (%)",
-        min_value=5,
-        max_value=30,
-        value=15
-    )
-
-    run = st.button(
-        "Run all experiments",
-        type="primary",
-        use_container_width=True
+        "Simulated missing region (%)", 5, 30, 15
     )
 
     st.caption(
-        "Privacy note: avoid uploading sensitive images to a public demo."
+        "Changing a setting automatically reruns the experiments."
     )
 
 
-# -----------------------------
-# Empty state
-# -----------------------------
+# ============================================================
+# EMPTY STATE
+# ============================================================
 if uploaded_file is None:
     st.markdown("### Start with a photograph")
 
@@ -506,53 +409,48 @@ if uploaded_file is None:
             """
             **Your workflow**
 
-            1. Upload a JPG, PNG, or WebP photo.
-            2. Adjust denoising and sharpening strength.
-            3. Run the three restoration experiments.
-            4. Compare visual results and reference-based metrics.
-            5. Download the results individually or as a ZIP.
+            1. Upload a JPG, PNG, or WebP image.
+            2. View the original photograph.
+            3. Inspect every intermediate processing step.
+            4. Compare reconstructed images and quality metrics.
+            5. Download individual images or a complete ZIP report.
             """
         )
 
         st.info(
-            "For the clearest result, use a high-quality original photo. "
-            "If your image is already sharp and clean, leave denoising "
-            "low and use detail enhancement sparingly."
+            "For clean photos, use low denoising and sharpening settings. "
+            "Restoration is not guaranteed to improve every image."
         )
 
     with right:
         st.markdown(
             """
             <div class="mini-card">
-              <div class="mini-label">EXPERIMENTS INCLUDED</div>
+              <div class="mini-label">RESTORATION EXPERIMENTS</div>
               <div class="mini-value">03</div>
               <p class="subtle">
-                Noise removal · Deblurring · Inpainting
+                Noise removal · Deblurring · Missing-region repair
               </p>
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
     st.stop()
 
 
-# -----------------------------
-# Load uploaded image
-# -----------------------------
+# ============================================================
+# LOAD IMAGE
+# ============================================================
 try:
     original = load_rgb(uploaded_file)
 
-except (
-    ValueError,
-    UnidentifiedImageError,
-    OSError
-) as exc:
+except (ValueError, UnidentifiedImageError, OSError) as exc:
     if isinstance(exc, ValueError):
         st.error(str(exc))
     else:
         st.error(
-            "This image could not be read. "
+            "Could not read this image. "
             "Try a valid JPG, PNG, or WebP file."
         )
 
@@ -563,364 +461,403 @@ height, width = original.shape[:2]
 
 st.markdown(
     f'<span class="pill">Image loaded</span> &nbsp; '
-    f'{width:,} × {height:,} pixels '
-    f'&nbsp; · &nbsp; RGB photograph',
-    unsafe_allow_html=True
+    f'{width:,} × {height:,} pixels',
+    unsafe_allow_html=True,
 )
 
-
-# -----------------------------
-# Main tabs
-# -----------------------------
-preview_tab, results_tab, guide_tab = st.tabs(
-    [
-        "① Original image",
-        "② Results & metrics",
-        "③ How it works"
-    ]
-)
+original_tab, pipeline_tab, metrics_tab, guide_tab = st.tabs([
+    "① Original image",
+    "② Step-by-step pipeline",
+    "③ Results & metrics",
+    "④ How it works",
+])
 
 
-# -----------------------------
-# Original image tab
-# -----------------------------
-with preview_tab:
+# ============================================================
+# ORIGINAL IMAGE TAB
+# ============================================================
+with original_tab:
     st.markdown(
         '<div class="section-head">Your original photograph</div>',
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
     st.caption(
-        "The app preserves the uploaded pixel dimensions. "
-        "Display scaling in the browser does not change the downloaded file."
+        "The image dimensions are preserved. Browser display scaling "
+        "does not change the downloaded image."
     )
 
-    st.image(
-        original,
-        use_container_width=True
+    st.image(original, use_container_width=True)
+
+    st.download_button(
+        "Download original PNG",
+        data=to_png_bytes(original),
+        file_name="original_image.png",
+        mime="image/png",
     )
 
-    col_a, col_b = st.columns(2)
 
-    with col_a:
-        st.download_button(
-            "Download original PNG",
-            data=to_png_bytes(original),
-            file_name="original_image.png",
-            mime="image/png"
+# ============================================================
+# AUTOMATIC IMAGE PROCESSING
+# ============================================================
+try:
+    with st.spinner(
+        "Processing your image and preparing intermediate results..."
+    ):
+        # A. NOISE REMOVAL
+        # Original -> noisy -> denoised -> enhanced
+        rng = np.random.default_rng(42)
+
+        noise = rng.normal(
+            0, noise_strength, original.shape
         )
 
-    with col_b:
-        st.metric(
-            "Pixel dimensions",
-            f"{width:,} × {height:,}"
+        noisy = np.clip(
+            original.astype(np.float32) + noise,
+            0,
+            255,
+        ).astype(np.uint8)
+
+        denoised_before_sharpening = denoise_image(
+            noisy, denoise_strength
         )
 
-
-# -----------------------------
-# Results and metrics tab
-# -----------------------------
-with results_tab:
-    if not run:
-        st.markdown("### Ready to restore")
-
-        st.write(
-            "Adjust the controls in the sidebar, then select "
-            "**Run all experiments**."
-        )
-
-        st.info(
-            "The app creates controlled degraded versions of your photo "
-            "so it can compare each reconstruction with the known original."
-        )
-
-    else:
-        try:
-            with st.spinner("Running restoration experiments..."):
-
-                # A. Add synthetic noise and remove it.
-                rng = np.random.default_rng(42)
-
-                noise = rng.normal(
-                    0,
-                    noise_strength,
-                    original.shape
-                )
-
-                noisy = np.clip(
-                    original.astype(np.float32) + noise,
-                    0,
-                    255
-                ).astype(np.uint8)
-
-                denoised = denoise_image(
-                    noisy,
-                    denoise_strength
-                )
-
-                if sharpen_amount > 0:
-                    denoised = unsharp_mask(
-                        denoised,
-                        amount=sharpen_amount,
-                        radius=sharpen_radius
-                    )
-
-                # B. Apply synthetic blur and attempt deblurring.
-                blurred = cv2.GaussianBlur(
-                    original,
-                    (int(blur_size), int(blur_size)),
-                    0
-                )
-
-                deblurred = deblur_image(
-                    blurred,
-                    iterations=deblur_iterations,
-                    kernel_size=int(blur_size),
-                    sigma=blur_sigma
-                )
-
-                if sharpen_amount > 0:
-                    deblurred = unsharp_mask(
-                        deblurred,
-                        amount=sharpen_amount * 0.35,
-                        radius=sharpen_radius
-                    )
-
-                # C. Simulate a missing rectangular region.
-                damaged = original.copy()
-
-                mask = np.zeros(
-                    (height, width),
-                    dtype=np.uint8
-                )
-
-                patch_w = max(
-                    1,
-                    int(width * missing_percent / 100)
-                )
-
-                patch_h = max(
-                    1,
-                    int(height * missing_percent / 100)
-                )
-
-                x1 = (width - patch_w) // 2
-                y1 = (height - patch_h) // 2
-                x2 = x1 + patch_w
-                y2 = y1 + patch_h
-
-                damaged[y1:y2, x1:x2] = 0
-                mask[y1:y2, x1:x2] = 255
-
-                inpainted = cv2.inpaint(
-                    damaged,
-                    mask,
-                    3,
-                    cv2.INPAINT_TELEA
-                )
-
-                degraded = {
-                    "Noise Removal": noisy,
-                    "Blur Restoration": blurred,
-                    "Missing Region": damaged,
-                }
-
-                restored = {
-                    "Noise Removal": denoised,
-                    "Blur Restoration": deblurred,
-                    "Missing Region": inpainted,
-                }
-
-                metrics = compare_metric_rows(
-                    original,
-                    restored
-                )
-
-            st.markdown(
-                '<div class="section-head">'
-                'Original vs. reconstructed'
-                '</div>',
-                unsafe_allow_html=True
+        if sharpen_amount > 0:
+            denoised = unsharp_mask(
+                denoised_before_sharpening,
+                sharpen_amount,
+                sharpen_radius,
             )
+        else:
+            denoised = denoised_before_sharpening.copy()
 
-            st.caption(
-                "Compare each reconstruction with its degraded input "
-                "and original reference. Use the sidebar settings to tune "
-                "the output."
+        # B. BLUR RESTORATION
+        # Original -> blurred -> deblurred -> enhanced
+        blurred = cv2.GaussianBlur(
+            original, (int(blur_size), int(blur_size)), 0
+        )
+
+        deblurred_before_sharpening = deblur_image(
+            blurred,
+            iterations=deblur_iterations,
+            kernel_size=int(blur_size),
+            sigma=blur_sigma,
+        )
+
+        if sharpen_amount > 0:
+            deblurred = unsharp_mask(
+                deblurred_before_sharpening,
+                sharpen_amount * 0.35,
+                sharpen_radius,
             )
+        else:
+            deblurred = deblurred_before_sharpening.copy()
 
-            method_choice = st.selectbox(
-                "Choose experiment to inspect",
-                list(restored.keys()),
-                key="method_choice"
-            )
+        # C. MISSING-REGION REPAIR
+        # Original -> damaged -> repaired
+        damaged = original.copy()
 
-            dcol, rcol = st.columns(2, gap="large")
+        mask = np.zeros(
+            (height, width), dtype=np.uint8
+        )
 
-            with dcol:
-                st.markdown("**Degraded input**")
+        patch_w = max(
+            1, int(width * missing_percent / 100)
+        )
+
+        patch_h = max(
+            1, int(height * missing_percent / 100)
+        )
+
+        x1 = (width - patch_w) // 2
+        y1 = (height - patch_h) // 2
+        x2 = x1 + patch_w
+        y2 = y1 + patch_h
+
+        damaged[y1:y2, x1:x2] = 0
+        mask[y1:y2, x1:x2] = 255
+
+        inpainted = cv2.inpaint(
+            damaged, mask, 3, cv2.INPAINT_TELEA
+        )
+
+        # Intermediate images shown on the website
+        stages = {
+            "Noise Removal": [
+                ("Step 1: Original Image", original),
+                ("Step 2: Synthetic Noise Added", noisy),
+                (
+                    "Step 3: After Denoising",
+                    denoised_before_sharpening,
+                ),
+                ("Step 4: Final Enhanced Image", denoised),
+            ],
+            "Blur Restoration": [
+                ("Step 1: Original Image", original),
+                ("Step 2: Synthetic Blur Applied", blurred),
+                (
+                    "Step 3: After Deblurring",
+                    deblurred_before_sharpening,
+                ),
+                ("Step 4: Final Restored Image", deblurred),
+            ],
+            "Missing Region Repair": [
+                ("Step 1: Original Image", original),
+                ("Step 2: Region Removed", damaged),
+                ("Step 3: Region Repaired", inpainted),
+            ],
+        }
+
+        degraded = {
+            "Noise Removal": noisy,
+            "Blur Restoration": blurred,
+            "Missing Region Repair": damaged,
+        }
+
+        restored = {
+            "Noise Removal": denoised,
+            "Blur Restoration": deblurred,
+            "Missing Region Repair": inpainted,
+        }
+
+        metrics = compare_metric_rows(
+            original, restored
+        )
+
+except Exception as exc:
+    st.error(f"Image processing failed: {exc}")
+    st.info(
+        "Try a smaller image or reduce the deblurring iterations "
+        "in the sidebar."
+    )
+    st.stop()
+
+
+# ============================================================
+# STEP-BY-STEP PIPELINE
+# ============================================================
+with pipeline_tab:
+    st.markdown(
+        '<div class="section-head">'
+        'Step-by-step reconstruction'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.write(
+        "Choose a method below. Each image shows what happens "
+        "at that stage of the process."
+    )
+
+    selected_method = st.selectbox(
+        "Choose reconstruction method",
+        list(stages.keys()),
+        key="pipeline_method",
+    )
+
+    selected_steps = stages[selected_method]
+
+    for start in range(0, len(selected_steps), 2):
+        cols = st.columns(2, gap="large")
+
+        for offset, col in enumerate(cols):
+            idx = start + offset
+
+            if idx >= len(selected_steps):
+                continue
+
+            step_title, step_image = selected_steps[idx]
+
+            with col:
+                st.markdown(f"**{step_title}**")
 
                 st.image(
-                    degraded[method_choice],
-                    use_container_width=True
+                    step_image,
+                    use_container_width=True,
                 )
 
-            with rcol:
-                st.markdown("**Reconstructed output**")
-
-                st.image(
-                    restored[method_choice],
-                    use_container_width=True
+                st.download_button(
+                    f"Download image — step {idx + 1}",
+                    data=to_png_bytes(step_image),
+                    file_name=(
+                        f"{selected_method.lower().replace(' ', '_')}"
+                        f"_step_{idx + 1}.png"
+                    ),
+                    mime="image/png",
+                    key=f"pipeline_download_{selected_method}_{idx}",
+                    use_container_width=True,
                 )
 
-            st.markdown(
-                '<div class="section-head">Quality evaluation</div>',
-                unsafe_allow_html=True
-            )
 
-            st.caption(
-                "Metrics compare each reconstructed image with the "
-                "uploaded original. They are reference-based and may not "
-                "perfectly reflect perceived quality."
-            )
+# ============================================================
+# RESULTS AND METRICS
+# ============================================================
+with metrics_tab:
+    st.markdown(
+        '<div class="section-head">'
+        'Original vs. reconstructed image'
+        '</div>',
+        unsafe_allow_html=True,
+    )
 
-            st.dataframe(
-                metrics,
-                use_container_width=True,
-                hide_index=True
-            )
+    method_for_comparison = st.selectbox(
+        "Choose result to compare",
+        list(restored.keys()),
+        key="result_method",
+    )
 
-            selected_row = metrics[
-                metrics["Experiment"] == method_choice
-            ].iloc[0]
+    compare_left, compare_right = st.columns(
+        2, gap="large"
+    )
 
-            m1, m2, m3 = st.columns(3)
+    with compare_left:
+        st.markdown("**Degraded input**")
+        st.image(
+            degraded[method_for_comparison],
+            use_container_width=True,
+        )
 
-            m1.metric(
-                "MSE",
-                f'{selected_row["MSE ↓"]:.3f}',
-                help="Lower is generally better."
-            )
+    with compare_right:
+        st.markdown("**Final reconstructed output**")
+        st.image(
+            restored[method_for_comparison],
+            use_container_width=True,
+        )
 
-            m2.metric(
-                "PSNR",
-                f'{selected_row["PSNR (dB) ↑"]:.2f} dB',
-                help="Higher is generally better."
-            )
+    st.markdown(
+        '<div class="section-head">Quality evaluation</div>',
+        unsafe_allow_html=True,
+    )
 
-            m3.metric(
-                "SSIM",
-                f'{selected_row["SSIM ↑"]:.4f}',
-                help=(
-                    "Closer to 1 generally indicates greater "
-                    "structural similarity."
-                )
-            )
+    st.caption(
+        "Metrics compare each reconstructed image with the uploaded "
+        "original. They may not perfectly reflect perceived quality."
+    )
 
-            st.markdown(
-                '<div class="section-head">Download your results</div>',
-                unsafe_allow_html=True
-            )
+    st.dataframe(
+        metrics,
+        use_container_width=True,
+        hide_index=True,
+    )
 
-            download_cols = st.columns(3)
-            method_names = list(restored.keys())
+    row = metrics[
+        metrics["Experiment"] == method_for_comparison
+    ].iloc[0]
 
-            for index, name in enumerate(method_names):
-                with download_cols[index]:
-                    st.download_button(
-                        f"Download {name}",
-                        data=to_png_bytes(restored[name]),
-                        file_name=(
-                            name.lower().replace(" ", "_")
-                            + "_reconstructed.png"
-                        ),
-                        mime="image/png",
-                        key=f"individual_{index}",
-                        use_container_width=True
-                    )
+    c1, c2, c3 = st.columns(3)
 
-            zip_data = build_results_zip(
-                original,
-                degraded,
-                restored,
-                metrics
-            )
+    c1.metric(
+        "MSE",
+        f'{row["MSE ↓"]:.3f}',
+        help="Lower is generally better.",
+    )
 
+    c2.metric(
+        "PSNR",
+        f'{row["PSNR (dB) ↑"]:.2f} dB',
+        help="Higher is generally better.",
+    )
+
+    c3.metric(
+        "SSIM",
+        f'{row["SSIM ↑"]:.4f}',
+        help="Closer to 1 generally indicates greater structural similarity.",
+    )
+
+    st.markdown(
+        '<div class="section-head">Download results</div>',
+        unsafe_allow_html=True,
+    )
+
+    download_cols = st.columns(3)
+
+    for idx, (name, image) in enumerate(restored.items()):
+        with download_cols[idx]:
             st.download_button(
-                "Download complete report (ZIP)",
-                data=zip_data,
-                file_name="imagerestore_results.zip",
-                mime="application/zip",
-                type="primary",
-                use_container_width=True
+                f"Download {name}",
+                data=to_png_bytes(image),
+                file_name=(
+                    f"{name.lower().replace(' ', '_')}"
+                    "_reconstructed.png"
+                ),
+                mime="image/png",
+                key=f"final_download_{idx}",
+                use_container_width=True,
             )
 
-            st.success(
-                "Experiments completed. If a result looks over-smoothed, "
-                "lower denoising strength. If edges look harsh, lower "
-                "detail enhancement."
-            )
+    zip_data = build_results_zip(
+        original, stages, metrics
+    )
 
-        except Exception as exc:
-            st.error(f"Processing failed: {exc}")
+    st.download_button(
+        "Download all steps and metrics (ZIP)",
+        data=zip_data,
+        file_name="imagerestore_complete_results.zip",
+        mime="application/zip",
+        type="primary",
+        use_container_width=True,
+    )
 
-            st.caption(
-                "Try a smaller image or lower the deblurring iteration count."
-            )
+    st.success(
+        "Processing complete. All intermediate and final images "
+        "are available in the pipeline tab."
+    )
 
 
-# -----------------------------
-# How it works tab
-# -----------------------------
+# ============================================================
+# HOW IT WORKS
+# ============================================================
 with guide_tab:
     st.markdown("### Restoration methods")
 
     st.markdown(
         """
-        - **Noise removal:** Non-local means denoising reduces simulated
-          random noise. Strong denoising may soften fine textures.
+        **1. Noise removal**
 
-        - **Blur restoration:** Richardson–Lucy deconvolution estimates
-          a sharper image from an estimated blur kernel. It works best
-          for mild blur that resembles the assumed kernel and can produce
-          ringing or noise when the estimate is incorrect.
+        Random noise is added for demonstration, then OpenCV
+        Non-Local Means denoising reduces it. A final detail
+        enhancement step is optional.
 
-        - **Missing-region repair:** OpenCV Telea inpainting estimates
-          pixels in a simulated rectangular damaged region from nearby
-          pixels. It cannot recover unknown original details exactly.
-        """
-    )
+        **2. Blur restoration**
 
-    st.markdown("### Metric interpretation")
+        Gaussian blur is applied to the original image.
+        Richardson–Lucy deconvolution attempts to reverse that
+        blur using an estimated kernel. Results depend on how
+        closely the estimate matches the actual blur.
 
-    st.markdown(
-        """
-        - **MSE:** Mean squared pixel error; lower is better.
+        **3. Missing-region repair**
+
+        A rectangular patch is removed from the center.
+        OpenCV Telea inpainting fills the region using nearby
+        pixels. It cannot know the exact original contents of
+        the missing area.
+
+        ### Metric interpretation
+
+        - **MSE:** Mean squared pixel error; lower is generally better.
         - **PSNR:** Signal-to-noise ratio relative to the reference;
           higher is generally better.
         - **SSIM:** Structural similarity; values closer to 1 generally
           indicate greater similarity.
 
-        Because the app creates the degraded input from the uploaded
-        original, it has a reference image for evaluation. For a real
-        damaged photo with no original reference, these metrics cannot
-        be calculated in the same way.
+        These metrics use the uploaded image as a known reference
+        because the app creates synthetic damage from it.
         """
     )
 
     st.warning(
-        "The app does not guarantee that every restoration will improve "
-        "an already-clean photo. Use low denoising strength for clean "
-        "images and compare outputs before downloading."
+        "This project demonstrates traditional image-processing "
+        "techniques, not an AI model trained to recover every lost "
+        "detail. Some results may look worse than the original."
     )
 
 
-# -----------------------------
-# Footer
-# -----------------------------
+# ============================================================
+# FOOTER
+# ============================================================
 st.markdown("---")
 
 st.caption(
-    "ImageRestore Studio · Educational image-processing demo · "
-    "Original image dimensions are preserved"
+    "ImageRestore Studio · Educational computer-vision project · "
+    "Uploaded image dimensions preserved"
 )
